@@ -6,38 +6,41 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef STANDALONE_OPS
-#define STANDALONE_OPS
+#ifndef DSP_OPS
+#define DSP_OPS
 
-include "DSPDialect.td"
-include "mlir/Interfaces/InferTypeOpInterface.td"
+include "mlir/IR/OpBase.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
 
-def DSP_FooOp : DSP_Op<"foo", [Pure,
-                                             SameOperandsAndResultType]> {
-    let summary = "Illustrates how to define an operation.";
-    let description = [{
-        The `dsp.foo` operation illustrates how to define a new
-        operation in a dialect. It uses an operation trait to declare that it
-        has no side effects.
-
-        This operation takes an integer argument and returns an integer.
-
-        Example:
-
-        ```mlir
-        %0 = arith.constant 2 : i32
-        // Apply the foo operation to %0
-        %1 = dsp.foo %0 : i32
-        ```
-    }];
-
-    let arguments = (ins I32:$input);
-    let results = (outs I32:$res);
-
-    let assemblyFormat = [{
-        $input attr-dict `:` type($input)
-    }];
+def DSP_Dialect : Dialect {
+  let name = "dsp";
+  let summary = "A dialect for Digital Signal Processing.";
+  let description = [{
+    The DSP dialect defines high-level mathematical operations like DCT and FFT
+    to enable algebraic simplifications before lowering to hardware or loops.
+  }];
+  let cppNamespace = "::mlir::dsp";
 }
 
-#endif // STANDALONE_OPS
+class DSP_Op<string mnemonic, list<Trait> traits = []> :
+    Op<DSP_Dialect, mnemonic, traits>;
+
+def DCTOp : DSP_Op<"dct", [Pure]> {
+  let summary = "Discrete Cosine Transform";
+  
+  let arguments = (ins AnyType:$input);
+  let results = (outs AnyType:$res);
+
+  let hasCanonicalizer = 1; 
+}
+
+def IDCTOp : DSP_Op<"idct", [Pure]> {
+  let summary = "Inverse Discrete Cosine Transform";
+  
+  let arguments = (ins AnyType:$input);
+  let results = (outs AnyType:$res);
+
+  let hasCanonicalizer = 1; 
+}
+
+#endif // DSP_OPS
