@@ -27,7 +27,7 @@ config.suffixes = ['.mlir']
 config.test_source_root = os.path.dirname(__file__)
 
 # test_exec_root: The root path where tests should be run.
-config.test_exec_root = os.path.join(config.standalone_obj_root, 'test')
+config.test_exec_root = os.path.join(config.dsp_obj_root, 'test')
 
 config.substitutions.append(('%PATH%', config.environment['PATH']))
 
@@ -42,15 +42,15 @@ llvm_config.use_default_substitutions()
 config.excludes = ['Inputs', 'Examples', 'CMakeLists.txt', 'README.txt', 'LICENSE.txt']
 
 # test_exec_root: The root path where tests should be run.
-config.test_exec_root = os.path.join(config.standalone_obj_root, 'test')
-config.standalone_tools_dir = os.path.join(config.standalone_obj_root, 'bin')
+config.test_exec_root = os.path.join(config.dsp_obj_root, 'test')
+config.dsp_tools_dir = os.path.join(config.dsp_obj_root, 'bin')
 
 # Tweak the PATH to include the tools dir.
 llvm_config.with_environment('PATH', config.llvm_tools_dir, append_path=True)
 
-tool_dirs = [config.standalone_tools_dir, config.llvm_tools_dir]
+tool_dirs = [config.dsp_tools_dir, config.llvm_tools_dir]
 tools = [
-    'standalone-opt'
+    'dsp-opt'
 ]
 
 llvm_config.add_tool_substitutions(tools, tool_dirs)

@@ -1,4 +1,4 @@
-//===- StandaloneOps.td - Standalone dialect ops -----------*- tablegen -*-===//
+//===- DSPOps.td - DSP dialect ops -----------*- tablegen -*-===//
 //
 // This file is licensed under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -9,15 +9,15 @@
 #ifndef STANDALONE_OPS
 #define STANDALONE_OPS
 
-include "StandaloneDialect.td"
+include "DSPDialect.td"
 include "mlir/Interfaces/InferTypeOpInterface.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
 
-def Standalone_FooOp : Standalone_Op<"foo", [Pure,
+def DSP_FooOp : DSP_Op<"foo", [Pure,
                                              SameOperandsAndResultType]> {
     let summary = "Illustrates how to define an operation.";
     let description = [{
-        The `standalone.foo` operation illustrates how to define a new
+        The `dsp.foo` operation illustrates how to define a new
         operation in a dialect. It uses an operation trait to declare that it
         has no side effects.
 
@@ -28,7 +28,7 @@ def Standalone_FooOp : Standalone_Op<"foo", [Pure,
         ```mlir
         %0 = arith.constant 2 : i32
         // Apply the foo operation to %0
-        %1 = standalone.foo %0 : i32
+        %1 = dsp.foo %0 : i32
         ```
     }];
 

@@ -4,11 +4,11 @@ set(LIBS
         ${dialect_libs}
         ${conversion_libs}
         MLIROptLib
-        MLIRStandalone
+        MLIRDSP
         MLIRRegisterAllDialects
         MLIRRegisterAllPasses
         )
-add_llvm_executable(standalone-opt standalone-opt.cpp)
+add_llvm_executable(dsp-opt dsp-opt.cpp)
 
-llvm_update_compile_flags(standalone-opt)
-target_link_libraries(standalone-opt PRIVATE ${LIBS})
+llvm_update_compile_flags(dsp-opt)
+target_link_libraries(dsp-opt PRIVATE ${LIBS})

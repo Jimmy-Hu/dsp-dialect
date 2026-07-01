@@ -1,4 +1,4 @@
-//===- StandaloneDialect.td - Standalone dialect -----------*- tablegen -*-===//
+//===- DSPDialect.td - DSP dialect -----------*- tablegen -*-===//
 //
 // This file is licensed under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -12,25 +12,25 @@
 include "mlir/IR/OpBase.td"
 
 //===----------------------------------------------------------------------===//
-// Standalone dialect definition.
+// DSP dialect definition.
 //===----------------------------------------------------------------------===//
 
-def Standalone_Dialect : Dialect {
-    let name = "standalone";
-    let summary = "A standalone out-of-tree MLIR dialect.";
+def DSP_Dialect : Dialect {
+    let name = "dsp";
+    let summary = "A dsp out-of-tree MLIR dialect.";
     let description = [{
         This dialect is an example of an out-of-tree MLIR dialect designed to
         illustrate the basic setup required to develop MLIR-based tools without
         working inside of the LLVM source tree.
     }];
-    let cppNamespace = "::mlir::standalone";
+    let cppNamespace = "::mlir::dsp";
 }
 
 //===----------------------------------------------------------------------===//
-// Base standalone operation definition.
+// Base dsp operation definition.
 //===----------------------------------------------------------------------===//
 
-class Standalone_Op<string mnemonic, list<Trait> traits = []> :
-        Op<Standalone_Dialect, mnemonic, traits>;
+class DSP_Op<string mnemonic, list<Trait> traits = []> :
+        Op<DSP_Dialect, mnemonic, traits>;
 
 #endif // STANDALONE_DIALECT
