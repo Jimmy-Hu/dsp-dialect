@@ -1,10 +1,25 @@
 @LIT_SITE_CFG_IN_HEADER@
 
-config.llvm_tools_dir = lit_config.substitute("@LLVM_TOOLS_DIR@")
+import sys
+
+# Setup essential LLVM and DSP variables for testing
+config.llvm_src_root = "@LLVM_SOURCE_DIR@"
+config.llvm_obj_root = "@LLVM_BINARY_DIR@"
+config.llvm_tools_dir = "@LLVM_TOOLS_DIR@"
+config.llvm_lib_dir = "@LLVM_LIBRARY_DIR@"
+config.llvm_shlib_dir = "@SHLIBDIR@"
+config.llvm_shlib_ext = "@SHLIBEXT@"
+config.llvm_exe_ext = "@EXEEXT@"
 config.lit_tools_dir = "@LLVM_LIT_TOOLS_DIR@"
-config.mlir_obj_dir = "@MLIR_BINARY_DIR@"
 config.python_executable = "@Python3_EXECUTABLE@"
-config.enable_bindings_python = "@MLIR_ENABLE_BINDINGS_PYTHON@"
+config.enable_shared = @ENABLE_SHARED@
+config.enable_assertions = @ENABLE_ASSERTIONS@
+config.native_target = "@LLVM_NATIVE_ARCH@"
+config.host_os = "@HOST_OS@"
+config.host_cc = "@HOST_CC@"
+config.host_cxx = "@HOST_CXX@"
+
+# DSP specific paths injected by CMake
 config.dsp_src_root = "@CMAKE_SOURCE_DIR@"
 config.dsp_obj_root = "@CMAKE_BINARY_DIR@"
 
@@ -12,4 +27,4 @@ import lit.llvm
 lit.llvm.initialize(lit_config, config)
 
 # Let the main config do the real work.
-lit_config.load_config(config, "@CMAKE_SOURCE_DIR@/test/lit.cfg.py")
+lit_config.load_config(config, "@CMAKE_CURRENT_SOURCE_DIR@/lit.cfg.py")
