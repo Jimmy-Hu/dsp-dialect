@@ -6,8 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef STANDALONE_DIALECT
-#define STANDALONE_DIALECT
+#ifndef DSP_DIALECT
+#define DSP_DIALECT
 
 include "mlir/IR/OpBase.td"
 
@@ -33,4 +33,4 @@ def DSP_Dialect : Dialect {
 class DSP_Op<string mnemonic, list<Trait> traits = []> :
         Op<DSP_Dialect, mnemonic, traits>;
 
-#endif // STANDALONE_DIALECT
+#endif // DSP_DIALECT
