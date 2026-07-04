@@ -12,7 +12,7 @@ using namespace mlir;
 using namespace mlir::dsp;
 
 // ------------------------------------------------------------------
-// Define the rewrite pattern: SimplifyIDCTofDCT
+// Define the rewrite pattern: SimplifyIDCTofDCT ( IDCT(DCT(x)) = x )
 // ------------------------------------------------------------------
 struct SimplifyIDCTofDCT : public OpRewritePattern<IDCTOp>
 {
@@ -28,22 +28,49 @@ struct SimplifyIDCTofDCT : public OpRewritePattern<IDCTOp>
         Value idctInput = idctOp.getInput();
 
         // 2. Check if this input is produced by a `dsp.dct` operation node.
-        // getDefiningOp traverses upwards to find the source operation that generated this value.
         DCTOp dctOp = idctInput.getDefiningOp<DCTOp>();
 
-        // 3. If the defining operation cannot be found, or it is not a DCT operation, 
-        // the match fails. Abort the optimization.
+        // 3. If the defining operation cannot be found, or it is not a DCT operation, abort.
         if (!dctOp)
         {
             return failure();
         }
 
-        // 4. Match successful! We have identified the pattern IDCT(DCT(x)).
-        // We use the "input (x)" of the DCT node to completely replace the "output (y)" 
-        // of the current IDCT node.
+        // 4. Match successful! Replace the output of IDCT with the input of DCT.
         rewriter.replaceOp(idctOp, dctOp.getInput());
 
-        // Return success to notify the MLIR framework that the IR graph has been modified
+        return success();
+    }
+};
+
+// ------------------------------------------------------------------
+// Define the rewrite pattern: SimplifyDCTofIDCT ( DCT(IDCT(x)) = x )
+// ------------------------------------------------------------------
+struct SimplifyDCTofIDCT : public OpRewritePattern<DCTOp>
+{
+    // Inherit from OpRewritePattern and specify DCTOp as the matching target
+    SimplifyDCTofIDCT(MLIRContext *context) : OpRewritePattern<DCTOp>(context, /*benefit=*/1) 
+    {
+    }
+
+    // The core logic for pattern matching and graph rewriting
+    LogicalResult matchAndRewrite(DCTOp dctOp, PatternRewriter &rewriter) const override
+    {
+        // 1. Retrieve the input source value of the DCT operation
+        Value dctInput = dctOp.getInput();
+
+        // 2. Check if this input is produced by a `dsp.idct` operation node.
+        IDCTOp idctOp = dctInput.getDefiningOp<IDCTOp>();
+
+        // 3. If the defining operation cannot be found, or it is not an IDCT operation, abort.
+        if (!idctOp)
+        {
+            return failure();
+        }
+
+        // 4. Match successful! Replace the output of DCT with the input of IDCT.
+        rewriter.replaceOp(dctOp, idctOp.getInput());
+
         return success();
     }
 };
@@ -59,10 +86,9 @@ void IDCTOp::getCanonicalizationPatterns(RewritePatternSet &results,
     results.add<SimplifyIDCTofDCT>(context);
 }
 
-// If you wish to implement the inverse pattern DCT(IDCT(x)) = x in the future, 
-// it should be registered here:
+// Instruct MLIR to load these rewrite rules when attempting to optimize DCTOp
 void DCTOp::getCanonicalizationPatterns(RewritePatternSet &results,
                                         MLIRContext *context)
 {
-    // results.add<SimplifyDCTofIDCT>(context);
+    results.add<SimplifyDCTofIDCT>(context);
 }
