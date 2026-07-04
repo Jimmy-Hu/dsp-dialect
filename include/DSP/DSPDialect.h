@@ -6,11 +6,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef STANDALONE_STANDALONEDIALECT_H
-#define STANDALONE_STANDALONEDIALECT_H
+#ifndef DSP_DIALECT_H
+#define DSP_DIALECT_H
 
 #include "mlir/IR/Dialect.h"
 
 #include "DSP/DSPOpsDialect.h.inc"
 
-#endif // STANDALONE_STANDALONEDIALECT_H
+#endif // DSP_DIALECT_H
