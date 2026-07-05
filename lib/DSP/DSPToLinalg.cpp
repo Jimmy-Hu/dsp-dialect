@@ -114,45 +114,44 @@ private:
         ConversionPatternRewriter &rewriter,
         FloatType mlirFloatType) const
     {
-        const Location loc{op.getLoc()};
-        const RankedTensorType tensorType{
-            RankedTensorType::get({static_cast<int64_t>(N), static_cast<int64_t>(N)}, mlirFloatType)
-        };
+        const Location loc = op.getLoc();
+        const RankedTensorType tensorType = 
+            RankedTensorType::get({static_cast<int64_t>(N), static_cast<int64_t>(N)}, mlirFloatType);
 
         // 1. Generate generic coefficients and transpose purely on the stack
         const std::array<T, N * N> dctMatrixElements{generateDCTCoefficientMatrix<T, N>()};
         const std::array<T, N * N> transposedMatrixElements{transposeMatrix<T, N>(dctMatrixElements)};
 
         // 2. Build dense attributes from stack arrays
-        const DenseElementsAttr cAttr{DenseElementsAttr::get(tensorType, ArrayRef<T>(dctMatrixElements))};
-        const DenseElementsAttr cTAttr{DenseElementsAttr::get(tensorType, ArrayRef<T>(transposedMatrixElements))};
+        const DenseElementsAttr cAttr = DenseElementsAttr::get(tensorType, ArrayRef<T>(dctMatrixElements));
+        const DenseElementsAttr cTAttr = DenseElementsAttr::get(tensorType, ArrayRef<T>(transposedMatrixElements));
 
-        const Value cTensor{rewriter.create<arith::ConstantOp>(loc, cAttr)};
-        const Value cTTensor{rewriter.create<arith::ConstantOp>(loc, cTAttr)};
+        const Value cTensor = rewriter.create<arith::ConstantOp>(loc, cAttr);
+        const Value cTTensor = rewriter.create<arith::ConstantOp>(loc, cTAttr);
 
         // 3. Initialize dynamic empty tensors
-        const Value emptyTensor1{rewriter.create<tensor::EmptyOp>(
-            loc, ArrayRef<int64_t>{static_cast<int64_t>(N), static_cast<int64_t>(N)}, mlirFloatType)};
-        const Value emptyTensor2{rewriter.create<tensor::EmptyOp>(
-            loc, ArrayRef<int64_t>{static_cast<int64_t>(N), static_cast<int64_t>(N)}, mlirFloatType)};
+        const Value emptyTensor1 = rewriter.create<tensor::EmptyOp>(
+            loc, ArrayRef<int64_t>{static_cast<int64_t>(N), static_cast<int64_t>(N)}, mlirFloatType);
+        const Value emptyTensor2 = rewriter.create<tensor::EmptyOp>(
+            loc, ArrayRef<int64_t>{static_cast<int64_t>(N), static_cast<int64_t>(N)}, mlirFloatType);
         
-        const Value zeroVal{rewriter.create<arith::ConstantOp>(loc, rewriter.getFloatAttr(mlirFloatType, 0.0))};
+        const Value zeroVal = rewriter.create<arith::ConstantOp>(loc, rewriter.getFloatAttr(mlirFloatType, 0.0));
         
-        const Value zeroTensor1{rewriter.create<linalg::FillOp>(loc, zeroVal, emptyTensor1).getResult(0)};
-        const Value zeroTensor2{rewriter.create<linalg::FillOp>(loc, zeroVal, emptyTensor2).getResult(0)};
+        const Value zeroTensor1 = rewriter.create<linalg::FillOp>(loc, zeroVal, emptyTensor1).getResult(0);
+        const Value zeroTensor2 = rewriter.create<linalg::FillOp>(loc, zeroVal, emptyTensor2).getResult(0);
 
         // 4. Sequence matrix multiplications
         auto matmul1 = rewriter.create<linalg::MatmulOp>(
             loc, 
-            ValueRange{cTensor, adaptor.getInput()}, 
-            ValueRange{zeroTensor1}
+            ValueRange({cTensor, adaptor.getInput()}), 
+            ValueRange({zeroTensor1})
         );
-        const Value tempTensor{matmul1.getResult(0)};
+        const Value tempTensor = matmul1.getResult(0);
 
         auto matmul2 = rewriter.create<linalg::MatmulOp>(
             loc, 
-            ValueRange{tempTensor, cTTensor}, 
-            ValueRange{zeroTensor2}
+            ValueRange({tempTensor, cTTensor}), 
+            ValueRange({zeroTensor2})
         );
 
         // 5. Replace original operation
@@ -202,7 +201,7 @@ public:
         OpAdaptor adaptor, 
         ConversionPatternRewriter &rewriter) const override 
     {
-        const RankedTensorType inputType{dyn_cast<RankedTensorType>(op.getInput().getType())};
+        const RankedTensorType inputType = dyn_cast<RankedTensorType>(op.getInput().getType());
         
         if (!inputType || inputType.getRank() != 2) 
         {
