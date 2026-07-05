@@ -9,7 +9,7 @@
 // RUN:   --convert-arith-to-llvm \
 // RUN:   --convert-func-to-llvm \
 // RUN:   --reconcile-unrealized-casts | \
-// RUN: mlir-cpu-runner -e main -entry-point-result=i32 \
+// RUN: %mlir_cpu_runner -e main -entry-point-result=i32 \
 // RUN:   -shared-libs=%dsp_obj_root/test/libDSPTestUtils%shlibext | FileCheck %s
 
 // ------------------------------------------------------------------
