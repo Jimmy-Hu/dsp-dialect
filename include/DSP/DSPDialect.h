@@ -1,16 +1,30 @@
-//===- DSPDialect.h - DSP dialect -----------------*- C++ -*-===//
-//
-// This file is licensed under the Apache License v2.0 with LLVM Exceptions.
-// See https://llvm.org/LICENSE.txt for license information.
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-//
-//===----------------------------------------------------------------------===//
-
-#ifndef DSP_DIALECT_H
-#define DSP_DIALECT_H
+#ifndef DSP_DSPDIALECT_H
+#define DSP_DSPDIALECT_H
 
 #include "mlir/IR/Dialect.h"
+#include "mlir/IR/OpDefinition.h"
 
-//#include "DSP/DSPOpsDialect.h.inc"
+// Include the auto-generated dialect header.
+// MLIR TableGen appends "Dialect.h.inc" suffix regardless of the .td file name.
+#include "DSP/DSPDialect.h.inc"
 
-#endif // DSP_DIALECT_H
+namespace mlir
+{
+namespace dsp
+{
+    class DSPDialect : public ::mlir::Dialect
+    {
+    public:
+        explicit DSPDialect(::mlir::MLIRContext *context);
+        
+        static ::llvm::StringRef getDialectNamespace() 
+        {
+            return "dsp";
+        }
+        
+        void initialize();
+    };
+} // namespace dsp
+} // namespace mlir
+
+#endif // DSP_DSPDIALECT_H
