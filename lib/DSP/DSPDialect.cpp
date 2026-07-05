@@ -19,6 +19,6 @@ using namespace mlir::dsp;
 void DSPDialect::initialize() {
   addOperations<
 #define GET_OP_LIST
-#include "DSP/DSP.cpp.inc"
+#include "DSP/DSPDialect.cpp.inc"
       >();
 }
