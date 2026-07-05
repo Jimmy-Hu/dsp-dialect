@@ -22,7 +22,7 @@
 #include "llvm/Support/ToolOutputFile.h"
 
 #include "DSP/DSPDialect.h"
-#include "DSP/DSPOpsDialect.cpp.inc"
+#include "DSP/DSP.cpp.inc"
 
 int main(int argc, char **argv) {
   mlir::registerAllPasses();
