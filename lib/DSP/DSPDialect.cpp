@@ -9,16 +9,26 @@
 #include "DSP/DSPDialect.h"
 #include "DSP/DSPOps.h"
 
-using namespace mlir;
-using namespace mlir::dsp;
-
-//===----------------------------------------------------------------------===//
-// DSP dialect.
-//===----------------------------------------------------------------------===//
-
-void DSPDialect::initialize() {
-  addOperations<
-#define GET_OP_LIST
+// Include the generated dialect implementation (constructors, etc.)
+// This MUST be in the global scope because the generated file explicitly 
+// opens the mlir::dsp namespace inside it.
 #include "DSP/DSPDialect.cpp.inc"
-      >();
+
+namespace mlir
+{
+namespace dsp
+{
+
+// ------------------------------------------------------------------
+// Initialize the dialect by registering all operations
+// ------------------------------------------------------------------
+void DSPDialect::initialize()
+{
+    addOperations<
+#define GET_OP_LIST
+#include "DSP/DSPOps.cpp.inc"
+    >();
 }
+
+} // namespace dsp
+} // namespace mlir
