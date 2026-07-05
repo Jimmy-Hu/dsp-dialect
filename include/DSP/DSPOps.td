@@ -1,7 +1,7 @@
 #ifndef DSP_OPS
 #define DSP_OPS
 
-include "DSP/DSPDialect.td"
+include "DSP/DSP.td"
 include "mlir/Interfaces/InferTypeOpInterface.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
 
