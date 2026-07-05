@@ -16,6 +16,6 @@
 #include "mlir/Interfaces/SideEffectInterfaces.h"
 
 #define GET_OP_CLASSES
-//#include "DSP/DSPOps.h.inc"
+#include "DSP/DSPOps.h.inc"
 
 #endif // DSP_OPS_H
