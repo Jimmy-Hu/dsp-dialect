@@ -9,7 +9,7 @@ add_mlir_dialect_library(MLIRDSP
     ${PROJECT_SOURCE_DIR}/include/DSP
 
     DEPENDS
-    DSPIncGen
+    MLIRDSPIncGen
     DSPPassIncGen
 
     LINK_LIBS PUBLIC
