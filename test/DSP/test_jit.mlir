@@ -1,14 +1,14 @@
-// RUN: dsp-opt %s -convert-dsp-to-linalg \
-// RUN:   -one-shot-bufferize="bufferize-function-boundaries" \
-// RUN:   -convert-linalg-to-loops \
-// RUN:   -lower-affine \
-// RUN:   -convert-scf-to-cf \
-// RUN:   -expand-strided-metadata \
-// RUN:   -finalize-memref-to-llvm \
-// RUN:   -convert-math-to-llvm \
-// RUN:   -convert-arith-to-llvm \
-// RUN:   -convert-func-to-llvm \
-// RUN:   -reconcile-unrealized-casts | \
+// RUN: dsp-opt %s --convert-dsp-to-linalg \
+// RUN:   --one-shot-bufferize="bufferize-function-boundaries" \
+// RUN:   --convert-linalg-to-loops \
+// RUN:   --lower-affine \
+// RUN:   --convert-scf-to-cf \
+// RUN:   --expand-strided-metadata \
+// RUN:   --finalize-memref-to-llvm \
+// RUN:   --convert-math-to-llvm \
+// RUN:   --convert-arith-to-llvm \
+// RUN:   --convert-func-to-llvm \
+// RUN:   --reconcile-unrealized-casts | \
 // RUN: mlir-cpu-runner -e main -entry-point-result=i32 \
 // RUN:   -shared-libs=%dsp_obj_root/test/libDSPTestUtils%shlibext | FileCheck %s
 
