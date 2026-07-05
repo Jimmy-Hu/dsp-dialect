@@ -2,40 +2,26 @@
 
 import os
 import lit.formats
-import lit.util
+import lit.llvm
 
-from lit.llvm import llvm_config
+# Initialize LLVM-specific lit configurations
+lit.llvm.initialize(lit_config, config)
 
-# Configuration file for the 'lit' test runner.
-
-# name: The name of this test suite.
-config.name = 'DSP'
-
-# testFormat: The test format to use to interpret tests.
+# Basic Configuration
+config.name = 'DSP Dialect'
 config.test_format = lit.formats.ShTest(not llvm_config.use_lit_shell)
-
-# suffixes: A list of file extensions to treat as test files.
 config.suffixes = ['.mlir']
-
-# test_source_root: The root path where tests are located.
 config.test_source_root = os.path.dirname(__file__)
-
-# Add system environment variables that might be needed by the compiler
-llvm_config.with_system_environment(['HOME', 'INCLUDE', 'LIB', 'TMP', 'TEMP'])
-llvm_config.use_default_substitutions()
-
-# excludes: A list of directories to exclude from the testsuite.
-config.excludes = ['CMakeLists.txt', 'README.txt', 'LICENSE.txt']
-
-# test_exec_root: The root path where tests should be run.
 config.test_exec_root = os.path.join(config.dsp_obj_root, 'test')
-config.dsp_tools_dir = os.path.join(config.dsp_obj_root, 'bin')
 
-# Add the DSP tools directory to the path so that 'dsp-opt' can be found during tests.
+# Add tool paths to the environment so tools can be found
 llvm_config.with_environment('PATH', config.dsp_tools_dir, append_path=True)
-
-# Add the LLVM tools directory to the path so that 'mlir-cpu-runner' can be found.
 llvm_config.with_environment('PATH', config.llvm_tools_dir, append_path=True)
 
+# Register custom substitutions for shared libraries
 config.substitutions.append(('%dsp_obj_root', config.dsp_obj_root))
 config.substitutions.append(('%shlibext', config.llvm_shlib_ext))
+
+# Safely resolve mlir-cpu-runner using the dynamic LLVM tools directory from CMake
+mlir_cpu_runner_path = os.path.join(config.llvm_tools_dir, 'mlir-cpu-runner')
+config.substitutions.append(('%mlir_cpu_runner', mlir_cpu_runner_path))
