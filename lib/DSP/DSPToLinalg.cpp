@@ -1,7 +1,8 @@
 // ------------------------------------------------------------------
 // Lowering Pass: Converts DSP dialect operations (like dsp.dct) 
 // into Linalg and Arith dialect operations.
-// Supports generic floating-point types via dynamic type dispatch.
+// Supports generic floating-point types and variable block sizes 
+// via dynamic type and size dispatch.
 // ------------------------------------------------------------------
 
 #include "DSP/DSPDialect.h"
@@ -20,6 +21,7 @@
 #include <array>
 #include <cmath>
 #include <concepts>
+#include <cstdint>
 
 // Include the auto-generated pass definitions from TableGen
 namespace mlir 
@@ -39,36 +41,34 @@ namespace
 {
 
 // ------------------------------------------------------------------
-// Helper template to generate the 8x8 DCT-II constant coefficient matrix.
-// Constrained to floating-point types using C++20 concepts.
-// Calculations are internally performed using double to guarantee 
-// maximum precision before being cast to the target type T.
+// Helper template to generate the NxN DCT-II constant coefficient matrix.
+// Constrained to floating-point types using C++20 concepts and fully 
+// parameterized by size N to avoid any dynamic memory allocation.
 // ------------------------------------------------------------------
-template <std::floating_point T>
-constexpr std::array<T, 64> generateDCTCoefficientMatrix()
+template <std::floating_point T, std::size_t N>
+constexpr std::array<T, N * N> generateDCTCoefficientMatrix()
 {
-    constexpr std::size_t n{8};
-    std::array<T, 64> matrix{};
+    std::array<T, N * N> matrix{};
 
     constexpr double kPi{3.14159265358979323846};
 
-    for (std::size_t i{0}; i < n; ++i)
+    for (std::size_t i{0}; i < N; ++i)
     {
-        for (std::size_t j{0}; j < n; ++j)
+        for (std::size_t j{0}; j < N; ++j)
         {
             const double alpha{
-                (i == 0) ? std::sqrt(1.0 / static_cast<double>(n)) 
-                         : std::sqrt(2.0 / static_cast<double>(n))
+                (i == 0) ? std::sqrt(1.0 / static_cast<double>(N)) 
+                         : std::sqrt(2.0 / static_cast<double>(N))
             };
             
             const double value{
                 alpha * std::cos(
                     (kPi * static_cast<double>(i) * (2.0 * static_cast<double>(j) + 1.0)) / 
-                    (2.0 * static_cast<double>(n))
+                    (2.0 * static_cast<double>(N))
                 )
             };
             
-            matrix[i * n + j] = static_cast<T>(value);
+            matrix[i * N + j] = static_cast<T>(value);
         }
     }
     
@@ -76,20 +76,19 @@ constexpr std::array<T, 64> generateDCTCoefficientMatrix()
 }
 
 // ------------------------------------------------------------------
-// Helper template to transpose the 8x8 DCT matrix
+// Helper template to transpose the NxN DCT matrix
 // ------------------------------------------------------------------
-template <std::floating_point T>
-constexpr std::array<T, 64> transposeMatrix(
-    const std::array<T, 64>& inputMatrix)
+template <std::floating_point T, std::size_t N>
+constexpr std::array<T, N * N> transposeMatrix(
+    const std::array<T, N * N>& inputMatrix)
 {
-    constexpr std::size_t n{8};
-    std::array<T, 64> transposed{};
+    std::array<T, N * N> transposed{};
 
-    for (std::size_t i{0}; i < n; ++i)
+    for (std::size_t i{0}; i < N; ++i)
     {
-        for (std::size_t j{0}; j < n; ++j)
+        for (std::size_t j{0}; j < N; ++j)
         {
-            transposed[i * n + j] = inputMatrix[j * n + i];
+            transposed[i * N + j] = inputMatrix[j * N + i];
         }
     }
 
@@ -106,35 +105,37 @@ struct DCTOpConversion : public OpConversionPattern<DCTOp>
 private:
     // ------------------------------------------------------------------
     // A highly generic inner worker function.
-    // It encapsulates all the lowering logic and accepts the target 
-    // C++ type T and its corresponding MLIR FloatType.
+    // Encapsulates lowering logic parameterized by BOTH type T and size N.
     // ------------------------------------------------------------------
-    template <std::floating_point T>
-    LogicalResult lowerDCTWithSpecificType(
+    template <std::floating_point T, std::size_t N>
+    LogicalResult lowerDCTWithSpecificTypeAndSize(
         DCTOp op, 
         OpAdaptor adaptor, 
         ConversionPatternRewriter &rewriter,
         FloatType mlirFloatType) const
     {
         const Location loc{op.getLoc()};
-        const RankedTensorType tensorType{RankedTensorType::get({8, 8}, mlirFloatType)};
+        const RankedTensorType tensorType{
+            RankedTensorType::get({static_cast<int64_t>(N), static_cast<int64_t>(N)}, mlirFloatType)
+        };
 
-        // 1. Generate generic coefficients and transpose
-        const std::array<T, 64> dctMatrixElements{generateDCTCoefficientMatrix<T>()};
-        const std::array<T, 64> transposedMatrixElements{transposeMatrix<T>(dctMatrixElements)};
+        // 1. Generate generic coefficients and transpose purely on the stack
+        const std::array<T, N * N> dctMatrixElements{generateDCTCoefficientMatrix<T, N>()};
+        const std::array<T, N * N> transposedMatrixElements{transposeMatrix<T, N>(dctMatrixElements)};
 
-        // 2. Build dense attributes. DenseElementsAttr gracefully handles ArrayRef<T>
+        // 2. Build dense attributes from stack arrays
         const DenseElementsAttr cAttr{DenseElementsAttr::get(tensorType, ArrayRef<T>(dctMatrixElements))};
         const DenseElementsAttr cTAttr{DenseElementsAttr::get(tensorType, ArrayRef<T>(transposedMatrixElements))};
 
         const Value cTensor{rewriter.create<arith::ConstantOp>(loc, cAttr)};
         const Value cTTensor{rewriter.create<arith::ConstantOp>(loc, cTAttr)};
 
-        // 3. Initialize dynamic empty tensors based on the resolved MLIR FloatType
-        const Value emptyTensor1{rewriter.create<tensor::EmptyOp>(loc, ArrayRef<int64_t>{8, 8}, mlirFloatType)};
-        const Value emptyTensor2{rewriter.create<tensor::EmptyOp>(loc, ArrayRef<int64_t>{8, 8}, mlirFloatType)};
+        // 3. Initialize dynamic empty tensors
+        const Value emptyTensor1{rewriter.create<tensor::EmptyOp>(
+            loc, ArrayRef<int64_t>{static_cast<int64_t>(N), static_cast<int64_t>(N)}, mlirFloatType)};
+        const Value emptyTensor2{rewriter.create<tensor::EmptyOp>(
+            loc, ArrayRef<int64_t>{static_cast<int64_t>(N), static_cast<int64_t>(N)}, mlirFloatType)};
         
-        // Use rewriter.getFloatAttr(Type, double) to dynamically create the zero value
         const Value zeroVal{rewriter.create<arith::ConstantOp>(loc, rewriter.getFloatAttr(mlirFloatType, 0.0))};
         
         const Value zeroTensor1{rewriter.create<linalg::FillOp>(loc, zeroVal, emptyTensor1).getResult(0)};
@@ -160,10 +161,41 @@ private:
         return success();
     }
 
+    // ------------------------------------------------------------------
+    // Runtime size dispatcher to map dynamic IR shape to static N
+    // ------------------------------------------------------------------
+    template <std::floating_point T>
+    LogicalResult dispatchSize(
+        DCTOp op, 
+        OpAdaptor adaptor, 
+        ConversionPatternRewriter &rewriter,
+        FloatType mlirFloatType,
+        const int64_t matrixSize) const
+    {
+        if (matrixSize == 4)
+        {
+            return lowerDCTWithSpecificTypeAndSize<T, 4uz>(op, adaptor, rewriter, mlirFloatType);
+        }
+        else if (matrixSize == 8)
+        {
+            return lowerDCTWithSpecificTypeAndSize<T, 8uz>(op, adaptor, rewriter, mlirFloatType);
+        }
+        else if (matrixSize == 16)
+        {
+            return lowerDCTWithSpecificTypeAndSize<T, 16uz>(op, adaptor, rewriter, mlirFloatType);
+        }
+        else if (matrixSize == 32)
+        {
+            return lowerDCTWithSpecificTypeAndSize<T, 32uz>(op, adaptor, rewriter, mlirFloatType);
+        }
+
+        return rewriter.notifyMatchFailure(
+            op, "Unsupported DCT matrix size! (Currently supporting 4x4, 8x8, 16x16, 32x32)");
+    }
+
 public:
     // ------------------------------------------------------------------
-    // The main dispatcher. It interrogates the IR type at runtime 
-    // and statically dispatches to the correct generic implementation.
+    // The main dispatcher. Interrogates the IR type and shape at runtime.
     // ------------------------------------------------------------------
     LogicalResult matchAndRewrite(
         DCTOp op, 
@@ -172,28 +204,32 @@ public:
     {
         const RankedTensorType inputType{dyn_cast<RankedTensorType>(op.getInput().getType())};
         
-        if (!inputType || inputType.getRank() != 2 || 
-            inputType.getShape()[0] != 8 || inputType.getShape()[1] != 8) 
+        if (!inputType || inputType.getRank() != 2) 
         {
-            return rewriter.notifyMatchFailure(op, "Expected an 8x8 tensor as input for DCT");
+            return rewriter.notifyMatchFailure(op, "Expected a 2D ranked tensor as input for DCT");
         }
 
-        // Interrogate the element type from the parsed IR
+        const int64_t dim0{inputType.getShape()[0]};
+        const int64_t dim1{inputType.getShape()[1]};
+
+        if (dim0 != dim1) 
+        {
+            return rewriter.notifyMatchFailure(op, "Expected a square tensor as input for DCT");
+        }
+
         const Type elemType{inputType.getElementType()};
 
-        // Dynamically route to the strongly-typed generic lowering worker
         if (elemType.isF32())
         {
-            return lowerDCTWithSpecificType<float>(
-                op, adaptor, rewriter, cast<FloatType>(elemType));
+            return dispatchSize<float>(
+                op, adaptor, rewriter, cast<FloatType>(elemType), dim0);
         }
         else if (elemType.isF64())
         {
-            return lowerDCTWithSpecificType<double>(
-                op, adaptor, rewriter, cast<FloatType>(elemType));
+            return dispatchSize<double>(
+                op, adaptor, rewriter, cast<FloatType>(elemType), dim0);
         }
 
-        // We can easily expand this to f16, bf16, etc. in the future!
         return rewriter.notifyMatchFailure(
             op, "Unsupported floating-point type for DCT! Only f32 and f64 are currently supported."
         );
