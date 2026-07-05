@@ -34,5 +34,8 @@ config.dsp_tools_dir = os.path.join(config.dsp_obj_root, 'bin')
 # Add the DSP tools directory to the path so that 'dsp-opt' can be found during tests.
 llvm_config.with_environment('PATH', config.dsp_tools_dir, append_path=True)
 
+# Add the LLVM tools directory to the path so that 'mlir-cpu-runner' can be found.
+llvm_config.with_environment('PATH', config.llvm_tools_dir, append_path=True)
+
 config.substitutions.append(('%dsp_obj_root', config.dsp_obj_root))
 config.substitutions.append(('%shlibext', config.llvm_shlib_ext))
