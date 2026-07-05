@@ -141,17 +141,20 @@ private:
         const Value zeroTensor2 = rewriter.create<linalg::FillOp>(loc, zeroVal, emptyTensor2).getResult(0);
 
         // 4. Sequence matrix multiplications
+        // Cast input to a standard Value to satisfy C++23 ValueRange initializer list deduction
+        const Value inputVal = adaptor.getInput();
+
         auto matmul1 = rewriter.create<linalg::MatmulOp>(
             loc, 
-            ValueRange({cTensor, adaptor.getInput()}), 
-            ValueRange({zeroTensor1})
+            ValueRange{cTensor, inputVal}, 
+            ValueRange{zeroTensor1}
         );
         const Value tempTensor = matmul1.getResult(0);
 
         auto matmul2 = rewriter.create<linalg::MatmulOp>(
             loc, 
-            ValueRange({tempTensor, cTTensor}), 
-            ValueRange({zeroTensor2})
+            ValueRange{tempTensor, cTTensor}, 
+            ValueRange{zeroTensor2}
         );
 
         // 5. Replace original operation
