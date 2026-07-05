@@ -6,8 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef STANDALONE_STANDALONEOPS_H
-#define STANDALONE_STANDALONEOPS_H
+#ifndef DSP_OPS_H
+#define DSP_OPS_H
 
 #include "mlir/IR/BuiltinTypes.h"
 #include "mlir/IR/Dialect.h"
@@ -18,4 +18,4 @@
 #define GET_OP_CLASSES
 #include "DSP/DSPOps.h.inc"
 
-#endif // STANDALONE_STANDALONEOPS_H
+#endif // DSP_OPS_H
