@@ -1,6 +1,6 @@
 // ------------------------------------------------------------------
-// A standalone C++23 tool to auto-generate both exhaustive and 
-// randomized deeply nested MLIR canonicalization tests.
+// Lowering Pass: Converts DSP dialect operations (like dsp.dct) 
+// into Linalg and Arith dialect operations.
 // ------------------------------------------------------------------
 
 #include "DSP/DSPDialect.h"
@@ -16,8 +16,8 @@
 #include "mlir/Pass/Pass.h"
 #include "mlir/Transforms/DialectConversion.h"
 
+#include <array>
 #include <cmath>
-#include <vector>
 
 // Include the auto-generated pass definitions from TableGen
 namespace mlir 
@@ -40,29 +40,36 @@ namespace
 // Elements are calculated with maximum precision (double) before 
 // being stored as single-precision floats required by MLIR f32 types.
 // ------------------------------------------------------------------
-constexpr std::vector<float> generateDCTCoefficientMatrix()
+constexpr std::array<float, 64> generateDCTCoefficientMatrix()
 {
     // The matrix dimension is fixed at 8x8 for standard block-based DCT
-    constexpr std::size_t n{8uz};
-    std::vector<float> matrix;
-    matrix.reserve(n * n);
+    constexpr std::size_t n{8};
+    
+    // Utilize std::array which is a valid literal type in C++17 constexpr
+    std::array<float, 64> matrix{};
+
+    // Define a highly precise PI constant to maintain C++17 compatibility
+    // without relying on C++20 <numbers> or non-standard macros like M_PI.
+    constexpr double kPi{3.14159265358979323846};
 
     // Calculate DCT-II coefficients using exact math functions
-    for (std::size_t i = 0uz; i < n; ++i)
+    for (std::size_t i = 0; i < n; ++i)
     {
-        for (std::size_t j = 0uz; j < n; ++j)
+        for (std::size_t j = 0; j < n; ++j)
         {
             // The scaling factor is 1/sqrt(N) for the DC component (i=0), 
             // and sqrt(2/N) for the AC components (i>0).
-            const double alpha = (i == 0uz) ? std::sqrt(1.0 / static_cast<double>(n)) 
-                                            : std::sqrt(2.0 / static_cast<double>(n));
+            const double alpha = (i == 0) ? std::sqrt(1.0 / static_cast<double>(n)) 
+                                          : std::sqrt(2.0 / static_cast<double>(n));
             
             // Standard DCT-II formula for the current element
-            const double value = alpha * std::cos((M_PI * static_cast<double>(i) * (2.0 * static_cast<double>(j) + 1.0)) / 
-                                                  (2.0 * static_cast<double>(n)));
+            const double value = alpha * std::cos(
+                (kPi * static_cast<double>(i) * (2.0 * static_cast<double>(j) + 1.0)) / 
+                (2.0 * static_cast<double>(n))
+            );
             
-            // Cast down to single precision float for the tensor array
-            matrix.emplace_back(static_cast<float>(value));
+            // Store as single precision float in the 1D array (row-major)
+            matrix[i * n + j] = static_cast<float>(value);
         }
     }
     
@@ -72,19 +79,18 @@ constexpr std::vector<float> generateDCTCoefficientMatrix()
 // ------------------------------------------------------------------
 // Helper function to transpose the 8x8 DCT matrix
 // ------------------------------------------------------------------
-constexpr std::vector<float> transposeMatrix(
-    const std::vector<float>& inputMatrix, 
-    const std::size_t n)
+constexpr std::array<float, 64> transposeMatrix(
+    const std::array<float, 64>& inputMatrix)
 {
-    std::vector<float> transposed;
-    transposed.reserve(n * n);
+    constexpr std::size_t n{8};
+    std::array<float, 64> transposed{};
 
-    for (std::size_t i = 0uz; i < n; ++i)
+    for (std::size_t i = 0; i < n; ++i)
     {
-        for (std::size_t j = 0uz; j < n; ++j)
+        for (std::size_t j = 0; j < n; ++j)
         {
             // Access elements in column-major order to build the transposed row-major matrix
-            transposed.emplace_back(inputMatrix[j * n + i]);
+            transposed[i * n + j] = inputMatrix[j * n + i];
         }
     }
 
@@ -126,8 +132,8 @@ struct DCTOpConversion : public OpConversionPattern<DCTOp>
         RankedTensorType tensorType = RankedTensorType::get({8, 8}, rewriter.getF32Type());
 
         // 2. Pre-compute and create MLIR Constants for C and C^T matrices
-        std::vector<float> dctMatrixElements = generateDCTCoefficientMatrix();
-        std::vector<float> transposedMatrixElements = transposeMatrix(dctMatrixElements, 8uz);
+        std::array<float, 64> dctMatrixElements = generateDCTCoefficientMatrix();
+        std::array<float, 64> transposedMatrixElements = transposeMatrix(dctMatrixElements);
 
         // Build DenseElementsAttr to hold the float arrays for the MLIR framework
         DenseElementsAttr cAttr = DenseElementsAttr::get(tensorType, ArrayRef<float>(dctMatrixElements));
@@ -177,7 +183,8 @@ struct DCTOpConversion : public OpConversionPattern<DCTOp>
 // The Pass Implementation Class
 // Orchestrates the conversion process over an entire MLIR Function.
 // ------------------------------------------------------------------
-struct ConvertDSPToLinalgPass : public impl::ConvertDSPToLinalgBase<ConvertDSPToLinalgPass> 
+// FIXED: Explicitly scoped to mlir::dsp::impl to resolve ambiguous reference
+struct ConvertDSPToLinalgPass : public mlir::dsp::impl::ConvertDSPToLinalgBase<ConvertDSPToLinalgPass> 
 {
     void runOnOperation() override 
     {
