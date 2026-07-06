@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "DSP/DSPDialect.h"
+#include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/IR/Dialect.h"
 #include "mlir/IR/MLIRContext.h"
 #include "mlir/InitAllDialects.h"
@@ -15,18 +16,26 @@
 #include "mlir/Pass/PassManager.h"
 #include "mlir/Support/FileUtilities.h"
 #include "mlir/Tools/mlir-opt/MlirOptMain.h"
+#include <memory>
 
 // Auto-generated pass registration logic
 namespace mlir 
 {
 namespace dsp 
 {
+
+// Generate pass declarations (including createConvertDSPToLinalgPass)
+#define GEN_PASS_DECL
+#include "DSP/DSPPasses.h.inc"
+
+// Generate pass registration logic
 #define GEN_PASS_REGISTRATION
 #include "DSP/DSPPasses.h.inc"
+
 } // namespace dsp
 } // namespace mlir
 
-int main(int argc, char **argv) 
+int main(const int argc, char **argv) 
 {
     // Register all standard MLIR passes
     mlir::registerAllPasses();
@@ -43,5 +52,6 @@ int main(int argc, char **argv)
     registry.insert<mlir::dsp::DSPDialect>();
 
     return mlir::asMainReturnCode(
-        mlir::MlirOptMain(argc, argv, "DSP optimizer driver\n", registry));
+        mlir::MlirOptMain(argc, argv, "DSP optimizer driver\n", registry)
+    );
 }
