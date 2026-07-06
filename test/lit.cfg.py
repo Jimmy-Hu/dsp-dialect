@@ -3,6 +3,7 @@
 import os
 import lit.formats
 import lit.llvm
+from lit.llvm import llvm_config
 
 # Initialize LLVM-specific lit configurations
 lit.llvm.initialize(lit_config, config)
