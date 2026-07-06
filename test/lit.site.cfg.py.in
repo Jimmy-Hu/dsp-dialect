@@ -22,6 +22,7 @@ config.host_cxx = "@HOST_CXX@"
 # DSP specific paths injected by CMake
 config.dsp_src_root = "@CMAKE_SOURCE_DIR@"
 config.dsp_obj_root = "@CMAKE_BINARY_DIR@"
+config.dsp_tools_dir = "@DSP_TOOLS_DIR@"
 
 import lit.llvm
 lit.llvm.initialize(lit_config, config)
