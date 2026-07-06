@@ -24,7 +24,10 @@ namespace mlir
 namespace dsp 
 {
 
-// Generate pass declarations (including createConvertDSPToLinalgPass)
+// Forward declaration of the custom pass factory function
+std::unique_ptr<mlir::Pass> createConvertDSPToLinalgPass();
+
+// Generate pass declarations
 #define GEN_PASS_DECL
 #include "DSP/DSPPasses.h.inc"
 
