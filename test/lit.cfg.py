@@ -3,14 +3,17 @@
 import os
 import lit.formats
 import lit.llvm
-from lit.llvm import llvm_config
 
 # Initialize LLVM-specific lit configurations
 lit.llvm.initialize(lit_config, config)
 
 # Basic Configuration
 config.name = 'DSP Dialect'
-config.test_format = lit.formats.ShTest(not llvm_config.use_lit_shell)
+
+# LLVM 23+ deprecates external shell execution for tests. 
+# We must explicitly use the internal shell by setting execute_external=False.
+config.test_format = lit.formats.ShTest(execute_external=False)
+
 config.suffixes = ['.mlir']
 config.test_source_root = os.path.dirname(__file__)
 config.test_exec_root = os.path.join(config.dsp_obj_root, 'test')
