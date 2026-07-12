@@ -19,3 +19,4 @@ func.func @test_idct_dct_cancellation(%arg0: tensor<8x8xf32>) -> tensor<8x8xf32>
   // CHECK: return %[[ARG0]] : tensor<8x8xf32>
   return %1 : tensor<8x8xf32>
 }
+
