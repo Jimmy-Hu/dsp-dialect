@@ -23,3 +23,4 @@ func.func @test_idct_dct_cancellation(%arg0: tensor<8x8xf32>) -> tensor<8x8xf32>
 // ------------------------------------------------------------------
 // Test Case 2: DCT(IDCT(x)) = x
 // ------------------------------------------------------------------
+// CHECK-LABEL: func.func @test_dct_idct_cancellation
