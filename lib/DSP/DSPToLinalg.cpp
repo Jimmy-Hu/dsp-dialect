@@ -50,23 +50,21 @@ constexpr std::array<T, N * N> generateDCTCoefficientMatrix()
 {
     std::array<T, N * N> matrix{};
 
-    constexpr double kPi{3.14159265358979323846};
+    constexpr double kPi = 3.14159265358979323846;
 
-    for (std::size_t i{0}; i < N; ++i)
+    for (std::size_t i = 0; i < N; ++i)
     {
-        for (std::size_t j{0}; j < N; ++j)
+        for (std::size_t j = 0; j < N; ++j)
         {
-            const double alpha{
+            const double alpha = 
                 (i == 0) ? std::sqrt(1.0 / static_cast<double>(N)) 
-                         : std::sqrt(2.0 / static_cast<double>(N))
-            };
+                         : std::sqrt(2.0 / static_cast<double>(N));
             
-            const double value{
+            const double value = 
                 alpha * std::cos(
                     (kPi * static_cast<double>(i) * (2.0 * static_cast<double>(j) + 1.0)) / 
                     (2.0 * static_cast<double>(N))
-                )
-            };
+                );
             
             matrix[i * N + j] = static_cast<T>(value);
         }
@@ -84,9 +82,9 @@ constexpr std::array<T, N * N> transposeMatrix(
 {
     std::array<T, N * N> transposed{};
 
-    for (std::size_t i{0}; i < N; ++i)
+    for (std::size_t i = 0; i < N; ++i)
     {
-        for (std::size_t j{0}; j < N; ++j)
+        for (std::size_t j = 0; j < N; ++j)
         {
             transposed[i * N + j] = inputMatrix[j * N + i];
         }
@@ -119,8 +117,8 @@ private:
             RankedTensorType::get({static_cast<int64_t>(N), static_cast<int64_t>(N)}, mlirFloatType);
 
         // 1. Generate generic coefficients and transpose purely on the stack
-        const std::array<T, N * N> dctMatrixElements{generateDCTCoefficientMatrix<T, N>()};
-        const std::array<T, N * N> transposedMatrixElements{transposeMatrix<T, N>(dctMatrixElements)};
+        const std::array<T, N * N> dctMatrixElements = generateDCTCoefficientMatrix<T, N>();
+        const std::array<T, N * N> transposedMatrixElements = transposeMatrix<T, N>(dctMatrixElements);
 
         // 2. Build dense attributes from stack arrays
         const DenseElementsAttr cAttr = DenseElementsAttr::get(tensorType, ArrayRef<T>(dctMatrixElements));
@@ -131,9 +129,9 @@ private:
 
         // 3. Initialize dynamic empty tensors
         const Value emptyTensor1 = rewriter.create<tensor::EmptyOp>(
-            loc, ArrayRef<int64_t>{static_cast<int64_t>(N), static_cast<int64_t>(N)}, mlirFloatType);
+            loc, ArrayRef<int64_t>({static_cast<int64_t>(N), static_cast<int64_t>(N)}), mlirFloatType);
         const Value emptyTensor2 = rewriter.create<tensor::EmptyOp>(
-            loc, ArrayRef<int64_t>{static_cast<int64_t>(N), static_cast<int64_t>(N)}, mlirFloatType);
+            loc, ArrayRef<int64_t>({static_cast<int64_t>(N), static_cast<int64_t>(N)}), mlirFloatType);
         
         const Value zeroVal = rewriter.create<arith::ConstantOp>(loc, rewriter.getFloatAttr(mlirFloatType, 0.0));
         
@@ -141,20 +139,25 @@ private:
         const Value zeroTensor2 = rewriter.create<linalg::FillOp>(loc, zeroVal, emptyTensor2).getResult(0);
 
         // 4. Sequence matrix multiplications
-        // Cast input to a standard Value to satisfy C++23 ValueRange initializer list deduction
+        // Explicitly create arrays of Values to avoid initializer_list deduction issues with ValueRange
         const Value inputVal = adaptor.getInput();
+        Value matmul1Inputs[] = {cTensor, inputVal};
+        Value matmul1Outputs[] = {zeroTensor1};
 
         auto matmul1 = rewriter.create<linalg::MatmulOp>(
             loc, 
-            ValueRange{cTensor, inputVal}, 
-            ValueRange{zeroTensor1}
+            ValueRange(matmul1Inputs), 
+            ValueRange(matmul1Outputs)
         );
         const Value tempTensor = matmul1.getResult(0);
 
+        Value matmul2Inputs[] = {tempTensor, cTTensor};
+        Value matmul2Outputs[] = {zeroTensor2};
+
         auto matmul2 = rewriter.create<linalg::MatmulOp>(
             loc, 
-            ValueRange{tempTensor, cTTensor}, 
-            ValueRange{zeroTensor2}
+            ValueRange(matmul2Inputs), 
+            ValueRange(matmul2Outputs)
         );
 
         // 5. Replace original operation
@@ -211,15 +214,15 @@ public:
             return rewriter.notifyMatchFailure(op, "Expected a 2D ranked tensor as input for DCT");
         }
 
-        const int64_t dim0{inputType.getShape()[0]};
-        const int64_t dim1{inputType.getShape()[1]};
+        const int64_t dim0 = inputType.getShape()[0];
+        const int64_t dim1 = inputType.getShape()[1];
 
         if (dim0 != dim1) 
         {
             return rewriter.notifyMatchFailure(op, "Expected a square tensor as input for DCT");
         }
 
-        const Type elemType{inputType.getElementType()};
+        const Type elemType = inputType.getElementType();
 
         if (elemType.isF32())
         {
