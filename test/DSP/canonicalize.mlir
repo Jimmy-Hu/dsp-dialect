@@ -35,5 +35,6 @@ func.func @test_dct_idct_cancellation(%arg1: tensor<8x8xf32>) -> tensor<8x8xf32>
   // CHECK-NOT: dsp.idct
   // CHECK-NOT: dsp.dct
 
+  // The output should be directly wired to the input argument
   return %1 : tensor<8x8xf32>
 }
