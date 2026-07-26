@@ -34,5 +34,6 @@ func.func @test_dct_idct_cancellation(%arg1: tensor<8x8xf32>) -> tensor<8x8xf32>
   // Ensure both operations are eliminated
   // CHECK-NOT: dsp.idct
   // CHECK-NOT: dsp.dct
+
   return %1 : tensor<8x8xf32>
 }
