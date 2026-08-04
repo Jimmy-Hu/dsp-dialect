@@ -45,3 +45,5 @@ func.func @test_dct_idct_cancellation(%arg1: tensor<8x8xf32>) -> tensor<8x8xf32>
 // ------------------------------------------------------------------
 // CHECK-LABEL: func.func @test_nested_cancellation
 // CHECK-SAME: (%[[ARG2:.*]]: tensor<8x8xf32>)
+func.func @test_nested_cancellation(%arg2: tensor<8x8xf32>) -> tensor<8x8xf32> {
+}
