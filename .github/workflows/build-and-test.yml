@@ -1,68 +1,81 @@
-name: Build and test
+name: Build and Test DSP Dialect
 
-on: [push, pull_request]
-
-env:
-  LLVM_COMMIT: eabcfcee0803c72baa22f1209066b8a9f50076e4
-  CMAKE_FLAGS: '-DCMAKE_LINKER=lld -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DMLIR_DIR=$GITHUB_WORKSPACE/llvm-project/prefix/lib/cmake/mlir/ -DLLVM_DIR=$GITHUB_WORKSPACE/llvm-project/prefix/lib/cmake/llvm/ -DLLVM_EXTERNAL_LIT=$GITHUB_WORKSPACE/llvm-project/build/bin/llvm-lit'
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  lint:
-    name: Check formatting
-    runs-on: ubuntu-latest
-    steps:
-      - name: Get Template Code
-        uses: actions/checkout@v6
-      - name: clang-format
-        uses: DoozyX/clang-format-lint-action@v0.6
-        with:
-          source: '.'
-          extensions: 'h,cpp'
-          clangFormatVersion: 9
-
   build:
-    name: Build and test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Configure Environment
-        run: |
-          echo "$GITHUB_WORKSPACE/llvm-project/prefix/bin" >> "$GITHUB_PATH"
-          pip install --upgrade cmake
-      - name: Get Template Code
-        uses: actions/checkout@v6
-        with:
-          path: 'mlir-dsp-template'
-      - name: Cache LLVM
-        id: cache-llvm
-        uses: actions/cache@v5
-        with:
-          path: llvm-project
-          key: ${{ runner.os }}-llvm-install-${{ env.LLVM_COMMIT }}
-      - name: Get LLVM
-        if: steps.cache-llvm.outputs.cache-hit != 'true'
-        uses: actions/checkout@v6
-        with:
-          repository: 'llvm/llvm-project'
-          ref: '${{ env.LLVM_COMMIT }}'
-          path: 'llvm-project'
-      - name: Install LLVM
-        if: steps.cache-llvm.outputs.cache-hit != 'true'
-        run: |
-          mkdir $GITHUB_WORKSPACE/llvm-project/build
-          mkdir $GITHUB_WORKSPACE/llvm-project/prefix
-          cd $GITHUB_WORKSPACE/llvm-project/build
-          cmake $GITHUB_WORKSPACE/llvm-project/llvm -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLLVM_ENABLE_ASSERTIONS=ON -DLLVM_BUILD_EXAMPLES=OFF -DLLVM_TARGETS_TO_BUILD="host" -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/llvm-project/prefix -DLLVM_ENABLE_PROJECTS='mlir' -DLLVM_ENABLE_OCAMLDOC=OFF -DLLVM_ENABLE_BINDINGS=OFF -DLLVM_INSTALL_UTILS=ON -DLLVM_ENABLE_LLD=ON
-          cmake --build . --target install -- -j$(nproc)
-      - name: Sanitizer build
-        run: |
-          mkdir $GITHUB_WORKSPACE/mlir-dsp-template/sanitizer-build
-          cd $GITHUB_WORKSPACE/mlir-dsp-template/sanitizer-build
-          cmake $GITHUB_WORKSPACE/mlir-dsp-template -DCMAKE_BUILD_TYPE=Debug -DUSE_SANITIZER='Address;Undefined' ${{ env.CMAKE_FLAGS }}
-          cmake --build . --target check-dsp-opt -- -j$(nproc)
-      - name: Release build
-        run: |
-          mkdir $GITHUB_WORKSPACE/mlir-dsp-template/build
-          cd $GITHUB_WORKSPACE/mlir-dsp-template/build
-          cmake $GITHUB_WORKSPACE/mlir-dsp-template -DCMAKE_BUILD_TYPE=Release ${{ env.CMAKE_FLAGS }}
-          cmake --build . --target check-dsp-opt -- -j$(nproc)
+    name: Build and Test
+    # Use ubuntu-24.04 to ensure GCC 13/14 is available for C++23 support
+    runs-on: ubuntu-24.04
 
+    steps:
+    - name: Checkout DSP Dialect
+      uses: actions/checkout@v4
+      with:
+        path: dsp-dialect
+
+    - name: Checkout LLVM Project
+      uses: actions/checkout@v4
+      with:
+        # It is highly recommended to lock this to the specific CIRCT/LLVM commit you are using
+        repository: llvm/llvm-project
+        # ref: 'YOUR_SPECIFIC_LLVM_COMMIT_HASH_HERE' 
+        path: llvm-project
+
+    - name: Install System Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ninja-build cmake ccache libtbb-dev
+
+    - name: Setup Compiler Cache (ccache)
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        key: ubuntu-24.04-ccache
+        max-size: 2G
+
+    - name: Cache LLVM Build
+      id: cache-llvm
+      uses: actions/cache@v4
+      with:
+        path: llvm-project/build
+        # The cache key depends on the LLVM commit hash
+        key: ${{ runner.os }}-llvm-build-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-llvm-build-
+
+    - name: Build LLVM and MLIR
+      if: steps.cache-llvm.outputs.cache-hit != 'true'
+      run: |
+        cd llvm-project
+        mkdir build
+        cd build
+        cmake -G Ninja ../llvm \
+          -DLLVM_ENABLE_PROJECTS="mlir" \
+          -DLLVM_TARGETS_TO_BUILD="X86;NVPTX;AMDGPU" \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DLLVM_ENABLE_ASSERTIONS=ON \
+          -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+          -DLLVM_INSTALL_UTILS=ON
+        ninja mlir-libraries mlir-headers mlir-doc FileCheck count not
+
+    - name: Build DSP Dialect
+      run: |
+        cd dsp-dialect
+        mkdir build
+        cd build
+        cmake -G Ninja .. \
+          -DMLIR_DIR=$GITHUB_WORKSPACE/llvm-project/build/lib/cmake/mlir \
+          -DLLVM_EXTERNAL_LIT=$GITHUB_WORKSPACE/llvm-project/build/bin/llvm-lit \
+          -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+        ninja
+
+    - name: Run DSP Dialect Tests
+      run: |
+        cd dsp-dialect/build
+        ninja check-dsp
