@@ -43,9 +43,9 @@ jobs:
       with:
         path: llvm-project/build
         # The cache key depends on the LLVM commit hash
-        key: ${{ runner.os }}-llvm-build-${{ github.sha }}
+        key: ${{ runner.os }}-llvm-build-v2-${{ github.sha }}
         restore-keys: |
-          ${{ runner.os }}-llvm-build-
+          ${{ runner.os }}-llvm-build-v2-
 
     - name: Build LLVM and MLIR
       if: steps.cache-llvm.outputs.cache-hit != 'true'
