@@ -43,9 +43,9 @@ jobs:
       with:
         path: llvm-project/build
         # The cache key depends on the LLVM commit hash
-        key: ${{ runner.os }}-llvm-build-v2-${{ github.sha }}
+        key: ${{ runner.os }}-llvm-build-v3-${{ github.sha }}
         restore-keys: |
-          ${{ runner.os }}-llvm-build-v2-
+          ${{ runner.os }}-llvm-build-v3-
 
     - name: Build LLVM and MLIR
       if: steps.cache-llvm.outputs.cache-hit != 'true'
@@ -56,6 +56,7 @@ jobs:
         cmake -G Ninja ../llvm \
           -DLLVM_ENABLE_PROJECTS="mlir" \
           -DLLVM_TARGETS_TO_BUILD="X86;NVPTX;AMDGPU" \
+          -DMLIR_ENABLE_EXECUTION_ENGINE=ON \
           -DCMAKE_BUILD_TYPE=Release \
           -DLLVM_ENABLE_ASSERTIONS=ON \
           -DCMAKE_C_COMPILER_LAUNCHER=ccache \
