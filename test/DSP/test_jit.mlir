@@ -3,10 +3,12 @@
 // RUN:   --convert-linalg-to-loops \
 // RUN:   --lower-affine \
 // RUN:   --convert-scf-to-cf \
+// RUN:   --convert-cf-to-llvm \
 // RUN:   --expand-strided-metadata \
 // RUN:   --finalize-memref-to-llvm \
 // RUN:   --convert-math-to-llvm \
 // RUN:   --convert-arith-to-llvm \
+// RUN:   --convert-index-to-llvm \
 // RUN:   --convert-func-to-llvm \
 // RUN:   --reconcile-unrealized-casts | \
 // RUN: %mlir_cpu_runner -e main -entry-point-result=i32 \
