@@ -42,10 +42,10 @@ jobs:
       uses: actions/cache@v4
       with:
         path: llvm-project/build
-        # The cache key depends on the LLVM commit hash
-        key: ${{ runner.os }}-llvm-build-v4-${{ github.sha }}
+        # Update cache key to v5 to force a clean build of LLVM 20 tools
+        key: ${{ runner.os }}-llvm-build-v5-${{ github.sha }}
         restore-keys: |
-          ${{ runner.os }}-llvm-build-v4-
+          ${{ runner.os }}-llvm-build-v5-
 
     - name: Build LLVM and MLIR
       if: steps.cache-llvm.outputs.cache-hit != 'true'
@@ -62,7 +62,8 @@ jobs:
           -DCMAKE_C_COMPILER_LAUNCHER=ccache \
           -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
           -DLLVM_INSTALL_UTILS=ON
-        ninja mlir-libraries mlir-headers mlir-doc FileCheck count not mlir-cpu-runner mlir_c_runner_utils mlir_runner_utils
+        # MLIR 20 renamed mlir-cpu-runner to mlir-runner!
+        ninja mlir-libraries mlir-headers mlir-doc FileCheck count not mlir-runner mlir_c_runner_utils mlir_runner_utils
 
     - name: Build DSP Dialect
       run: |
