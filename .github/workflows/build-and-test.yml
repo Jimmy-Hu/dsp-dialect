@@ -61,7 +61,7 @@ jobs:
           -DCMAKE_C_COMPILER_LAUNCHER=ccache \
           -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
           -DLLVM_INSTALL_UTILS=ON
-        ninja mlir-libraries mlir-headers mlir-doc FileCheck count not
+        ninja mlir-libraries mlir-headers mlir-doc FileCheck count not mlir-cpu-runner mlir_c_runner_utils mlir_runner_utils
 
     - name: Build DSP Dialect
       run: |
