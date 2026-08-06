@@ -11,35 +11,25 @@
 // RUN:   --convert-index-to-llvm \
 // RUN:   --convert-func-to-llvm \
 // RUN:   --reconcile-unrealized-casts | \
-// RUN: %mlir_cpu_runner -e main -entry-point-result=i32 \
+// RUN: mlir-runner -e main -entry-point-result=i32 \
 // RUN:   -shared-libs=%dsp_obj_root/test/libDSPTestUtils%shlibext | FileCheck %s
 
-// ------------------------------------------------------------------
-// A simple MLIR test case to verify the dsp.dct lowering on CPU.
-// ------------------------------------------------------------------
-
-// 1. Declare our custom C++ verification function.
-// MLIR's bufferization pass will automatically convert this tensor signature 
-// to match the MemRef2DF32 pointer signature in our C++ code.
+// 1. Declare the external C verification function.
+// Since we run one-shot-bufferize, we can just declare it taking a tensor
+// and the bufferization pass will automatically convert it to a memref!
 func.func private @verify_dct_result(tensor<8x8xf32>) -> i32
 
 // 2. Define the main function that returns an integer (exit code).
 func.func @main() -> i32 {
-    // 3. Create a constant dense tensor (8x8) filled with the value 1.0.
+    // Create a constant dense tensor (8x8) filled with the value 1.0.
     %cst_input = arith.constant dense<1.0> : tensor<8x8xf32>
 
-    // 4. Call our custom DSP dialect operation.
+    // Call our custom DSP dialect operation.
     %dct_result = dsp.dct %cst_input : tensor<8x8xf32>
 
-    // 5. Pass the computed tensor directly into our C++ verification hook.
-    %status = func.call @verify_dct_result(%dct_result) : (tensor<8x8xf32>) -> i32
+    // Call the external C function to verify the mathematical result.
+    %exit_code = func.call @verify_dct_result(%dct_result) : (tensor<8x8xf32>) -> i32
 
-    // 6. Return the status from the C++ code (0 for success, 1 for failure).
-    return %status : i32
+    // CHECK: VERIFICATION_SUCCESS
+    return %exit_code : i32
 }
-
-// 7. Verify the JIT output. 
-// We now rely purely on the C++ epsilon calculation. 
-// If the absolute error for ANY of the 64 elements exceeds 1e-5, it prints Mismatch 
-// and VERIFICATION_FAILED, causing FileCheck to fail!
-// CHECK: VERIFICATION_SUCCESS
