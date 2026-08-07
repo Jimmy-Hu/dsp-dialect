@@ -52,5 +52,6 @@ func.func @test_nested_cancellation(%arg2: tensor<8x8xf32>) -> tensor<8x8xf32> {
   %1 = dsp.dct %0 : tensor<8x8xf32>
   %2 = dsp.idct %1 : tensor<8x8xf32>
   %3 = dsp.idct %2 : tensor<8x8xf32>
+  
   return %3 : tensor<8x8xf32>
 }
