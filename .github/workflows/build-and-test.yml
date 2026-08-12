@@ -51,7 +51,7 @@ jobs:
       if: steps.cache-llvm.outputs.cache-hit != 'true'
       run: |
         cd llvm-project
-        mkdir build
+        mkdir -p build
         cd build
         cmake -G Ninja ../llvm \
           -DLLVM_ENABLE_PROJECTS="mlir" \
