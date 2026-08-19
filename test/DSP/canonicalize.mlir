@@ -67,3 +67,6 @@ func.func @test_nested_cancellation(%arg2: tensor<8x8xf32>) -> tensor<8x8xf32> {
 // ------------------------------------------------------------------
 // CHECK-LABEL: func.func @test_alternating_cancellation
 // CHECK-SAME: (%[[ARG3:.*]]: tensor<8x8xf32>)
+func.func @test_alternating_cancellation(%arg3: tensor<8x8xf32>) -> tensor<8x8xf32> {
+  return %3 : tensor<8x8xf32>
+}
