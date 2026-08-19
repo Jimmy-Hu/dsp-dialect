@@ -66,3 +66,4 @@ func.func @test_nested_cancellation(%arg2: tensor<8x8xf32>) -> tensor<8x8xf32> {
 // Test Case 4: Alternating IDCT(DCT(IDCT(DCT(x)))) = x
 // ------------------------------------------------------------------
 // CHECK-LABEL: func.func @test_alternating_cancellation
+// CHECK-SAME: (%[[ARG3:.*]]: tensor<8x8xf32>)
