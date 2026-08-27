@@ -76,5 +76,6 @@ func.func @test_alternating_cancellation(%arg3: tensor<8x8xf32>) -> tensor<8x8xf
   %3 = dsp.idct %2 : tensor<8x8xf32>
   
   // Ensure all operations are eliminated
+  // CHECK-NOT: dsp.dct
   return %3 : tensor<8x8xf32>
 }
