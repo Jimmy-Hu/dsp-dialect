@@ -84,3 +84,4 @@ func.func @test_alternating_cancellation(%arg3: tensor<8x8xf32>) -> tensor<8x8xf
   return %3 : tensor<8x8xf32>
 }
 
+// ------------------------------------------------------------------
