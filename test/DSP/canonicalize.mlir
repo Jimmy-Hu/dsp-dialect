@@ -88,3 +88,4 @@ func.func @test_alternating_cancellation(%arg3: tensor<8x8xf32>) -> tensor<8x8xf
 // Test Case 5: Symmetric DCT(IDCT(IDCT(DCT(x)))) = x
 // ------------------------------------------------------------------
 // CHECK-LABEL: func.func @test_symmetric_cancellation_1
+// CHECK-SAME: (%[[ARG4:.*]]: tensor<8x8xf32>)
