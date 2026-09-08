@@ -90,4 +90,5 @@ func.func @test_alternating_cancellation(%arg3: tensor<8x8xf32>) -> tensor<8x8xf
 // CHECK-LABEL: func.func @test_symmetric_cancellation_1
 // CHECK-SAME: (%[[ARG4:.*]]: tensor<8x8xf32>)
 func.func @test_symmetric_cancellation_1(%arg4: tensor<8x8xf32>) -> tensor<8x8xf32> {
+  %0 = dsp.dct %arg4 : tensor<8x8xf32>
 }
