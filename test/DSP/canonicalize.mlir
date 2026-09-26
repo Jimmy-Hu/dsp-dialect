@@ -108,5 +108,6 @@ func.func @test_symmetric_cancellation_2(%arg5: tensor<8x8xf32>) -> tensor<8x8xf
   %0 = dsp.idct %arg5 : tensor<8x8xf32>
   %1 = dsp.idct %0 : tensor<8x8xf32>
   %2 = dsp.dct %1 : tensor<8x8xf32>
+  %3 = dsp.dct %2 : tensor<8x8xf32>
   return %3 : tensor<8x8xf32>
 }
