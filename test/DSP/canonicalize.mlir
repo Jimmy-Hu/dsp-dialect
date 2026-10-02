@@ -108,6 +108,7 @@ func.func @test_symmetric_cancellation_1(%arg4: tensor<8x8xf32>) -> tensor<8x8xf
 
 // ------------------------------------------------------------------
 // Test Case 6: Symmetric DCT(DCT(IDCT(IDCT(x)))) = x
+// ------------------------------------------------------------------
 func.func @test_symmetric_cancellation_2(%arg5: tensor<8x8xf32>) -> tensor<8x8xf32> {
   
   %0 = dsp.idct %arg5 : tensor<8x8xf32>
