@@ -113,6 +113,7 @@ func.func @test_symmetric_cancellation_1(%arg4: tensor<8x8xf32>) -> tensor<8x8xf
 // CHECK-SAME: (%[[ARG5:.*]]: tensor<8x8xf32>)
 func.func @test_symmetric_cancellation_2(%arg5: tensor<8x8xf32>) -> tensor<8x8xf32> {
   
+  // Original expression: y = DCT(DCT(IDCT(IDCT(x))))
   %0 = dsp.idct %arg5 : tensor<8x8xf32>
   %1 = dsp.idct %0 : tensor<8x8xf32>
   %2 = dsp.dct %1 : tensor<8x8xf32>
