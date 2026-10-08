@@ -121,5 +121,6 @@ func.func @test_symmetric_cancellation_2(%arg5: tensor<8x8xf32>) -> tensor<8x8xf
   
   // Ensure all operations are eliminated
   // CHECK-NOT: dsp.dct
+  // CHECK-NOT: dsp.idct
   return %3 : tensor<8x8xf32>
 }
