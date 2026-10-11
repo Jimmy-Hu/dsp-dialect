@@ -123,5 +123,6 @@ func.func @test_symmetric_cancellation_2(%arg5: tensor<8x8xf32>) -> tensor<8x8xf
   // CHECK-NOT: dsp.dct
   // CHECK-NOT: dsp.idct
 
+  // The output should be directly wired to the input argument
   return %3 : tensor<8x8xf32>
 }
