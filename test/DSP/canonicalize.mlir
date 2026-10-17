@@ -128,6 +128,7 @@ func.func @test_symmetric_cancellation_2(%arg5: tensor<8x8xf32>) -> tensor<8x8xf
   return %3 : tensor<8x8xf32>
 }
 
+// ------------------------------------------------------------------
 
 
 
