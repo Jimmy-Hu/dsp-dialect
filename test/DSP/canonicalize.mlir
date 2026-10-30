@@ -131,6 +131,7 @@ func.func @test_symmetric_cancellation_2(%arg5: tensor<8x8xf32>) -> tensor<8x8xf
 // ------------------------------------------------------------------
 // Test Case 7: Symmetric DCT(DCT(DCT(IDCT(IDCT(IDCT(x)))))) = x
 // ------------------------------------------------------------------
+// CHECK-LABEL: func.func @test_symmetric_cancellation_3
 
 
 
