@@ -147,6 +147,7 @@ func.func @test_symmetric_cancellation_3(%arg0: tensor<8x8xf32>) -> tensor<8x8xf
 
   // The output should be directly wired to the input argument
   // CHECK: return %[[ARG]] : tensor<8x8xf32>
+  return %5 : tensor<8x8xf32>
 
 
 
