@@ -14,10 +14,9 @@
 // RUN: mlir-runner -e main -entry-point-result=i32 \
 // RUN:   -shared-libs=%dsp_obj_root/test/libDSPTestUtils%shlibext | FileCheck %s
 
-// 1. Declare the external C verification function.
-// Since we run one-shot-bufferize, we can just declare it taking a tensor
-// and the bufferization pass will automatically convert it to a memref!
-func.func private @verify_dct_result(tensor<8x8xf32>) -> i32
+// ------------------------------------------------------------------
+// End-to-end JIT verification test for BOTH f32 and f64 precision.
+// ------------------------------------------------------------------
 
 // 2. Define the main function that returns an integer (exit code).
 func.func @main() -> i32 {
