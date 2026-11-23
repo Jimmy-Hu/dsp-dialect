@@ -18,10 +18,10 @@
 // End-to-end JIT verification test for BOTH f32 and f64 precision.
 // ------------------------------------------------------------------
 
-// 2. Define the main function that returns an integer (exit code).
-func.func @main() -> i32 {
-    // Create a constant dense tensor (8x8) filled with the value 1.0.
-    %cst_input = arith.constant dense<1.0> : tensor<8x8xf32>
+// 1. Declare external C verification hooks for both f32 and f64.
+// Bufferization will automatically lower these tensor arguments into unpacked MemRefs.
+func.func private @verify_dct_result_f32(tensor<8x8xf32>) -> i32
+func.func private @verify_dct_result_f64(tensor<8x8xf64>) -> i32
 
     // Call our custom DSP dialect operation.
     %dct_result = dsp.dct %cst_input : tensor<8x8xf32>
