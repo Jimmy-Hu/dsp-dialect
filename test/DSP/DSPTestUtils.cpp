@@ -5,8 +5,10 @@
 // ------------------------------------------------------------------
 
 #include <cmath>
+#include <concepts>
 #include <cstdint>
 #include <iostream>
+#include <string_view>
 
 extern "C"
 {
