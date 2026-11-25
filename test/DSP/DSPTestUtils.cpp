@@ -1,6 +1,7 @@
 // ------------------------------------------------------------------
 // C++ Utility library for verifying MLIR JIT execution results.
-// This will be compiled into a shared library (.so) and loaded by mlir-runner.
+// Uses a single generic C++23 template as the Single Source of Truth,
+// exposed via thin extern "C" ABI wrappers for f32 and f64.
 // ------------------------------------------------------------------
 
 #include <cmath>
