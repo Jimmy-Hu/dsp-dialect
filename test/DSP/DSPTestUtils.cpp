@@ -14,9 +14,8 @@ extern "C"
 {
 
 // ------------------------------------------------------------------
-// Verify the 8x8 DCT result against expected values.
-// In MLIR, by default, MemRefs are passed to external functions as 
-// unpacked arguments (allocated, aligned, offset, sizes..., strides...).
+// Compile-time tolerance configuration per floating-point precision.
+// f64 enforces a much stricter epsilon than f32.
 // ------------------------------------------------------------------
 int32_t verify_dct_result(
     float* allocated, 
